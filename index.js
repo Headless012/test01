@@ -1,5 +1,35 @@
 require('dotenv').config();
 const express = require('express');
+
+const PORT = process.env.PORT || 10000;
+console.log(`Starting HTTP health server on 0.0.0.0:${PORT}`);
+const runtimeState = {
+  botReady: false,
+  activeGenerations: 0
+};
+
+function startHealthServer() {
+  const app = express();
+
+  app.get('/', (req, res) => {
+    res.status(200).send('freebeat-discord-bot is running');
+  });
+
+  app.get('/healthz', (req, res) => {
+    res.status(200).json({
+      status: 'ok',
+      botReady: runtimeState.botReady,
+      activeGenerations: runtimeState.activeGenerations
+    });
+  });
+
+  return app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Health server listening on port ${PORT}`);
+  });
+}
+
+const healthServer = startHealthServer();
+
 const { Client, Events, GatewayIntentBits } = require('discord.js');
 const { chromium } = require('playwright-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -20,28 +50,6 @@ const client = new Client({
 });
 
 const activeGenerations = new Set();
-const PORT = process.env.PORT || 10000;
-let healthServer;
-
-function startHealthServer() {
-  const app = express();
-
-  app.get('/', (req, res) => {
-    res.status(200).send('freebeat-discord-bot is running');
-  });
-
-  app.get('/healthz', (req, res) => {
-    res.status(200).json({
-      status: 'ok',
-      botReady: client.isReady(),
-      activeGenerations: activeGenerations.size
-    });
-  });
-
-  return app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Health server listening on port ${PORT}`);
-  });
-}
 
 function getChromiumLaunchOptions() {
   const executablePath =
@@ -82,6 +90,7 @@ process.once('SIGINT', () => shutdown('SIGINT'));
 process.once('SIGTERM', () => shutdown('SIGTERM'));
 
 client.once(Events.ClientReady, () => {
+  runtimeState.botReady = true;
   console.log(`✅ Bot avviato come ${client.user.tag} - Max 3 gen + immagine + verticale`);
 });
 
@@ -123,10 +132,12 @@ client.on('messageCreate', async message => {
   }
 
   activeGenerations.add(message.id);
+  runtimeState.activeGenerations = activeGenerations.size;
   await message.reply(`⏳ Generazione avviata per **"${prompt}"** (${duration}s)${isVertical ? ' 📱 Verticale (9:16)' : ''}...`);
 
   automateFreebeat(prompt, duration, message, imagePath, isVertical).finally(() => {
     activeGenerations.delete(message.id);
+    runtimeState.activeGenerations = activeGenerations.size;
     if (imagePath && fs.existsSync(imagePath)) fs.unlinkSync(imagePath);
   }).catch(err => {
     console.error(err);
@@ -269,8 +280,6 @@ async function automateFreebeat(prompt, durationSeconds, originalMessage, imageP
     await browser.close().catch(() => {});
   }
 }
-
-healthServer = startHealthServer();
 
 if (!process.env.DISCORD_TOKEN) {
   console.error('Missing DISCORD_TOKEN environment variable.');
