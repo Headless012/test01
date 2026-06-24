@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
   chromium \
   fonts-liberation \
+  xauth \
   xvfb \
   libasound2 \
   libatk1.0-0 \
