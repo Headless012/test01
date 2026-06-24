@@ -4,6 +4,7 @@ ENV NODE_ENV=production
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV CHROME_PATH=/usr/bin/chromium
+ENV DISPLAY=:99
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
@@ -34,6 +35,8 @@ RUN npm ci --omit=dev
 
 COPY . .
 
+RUN chmod +x ./start-render.sh
+
 EXPOSE 10000
 
-CMD ["xvfb-run", "-a", "--server-args=-screen 0 1366x900x24 -nolisten tcp -ac", "node", "index.js"]
+CMD ["sh", "./start-render.sh"]
