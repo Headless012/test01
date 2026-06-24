@@ -270,10 +270,11 @@ async function automateFreebeat(prompt, durationSeconds, originalMessage, imageP
   }
 }
 
+healthServer = startHealthServer();
+
 if (!process.env.DISCORD_TOKEN) {
   console.error('Missing DISCORD_TOKEN environment variable.');
   process.exit(1);
 }
 
-healthServer = startHealthServer();
 client.login(process.env.DISCORD_TOKEN);
