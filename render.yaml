@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: freebeat-discord-bot
+    runtime: docker
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: DISCORD_TOKEN
+        sync: false
+      - key: CHROME_PATH
+        value: /usr/bin/chromium
+      - key: PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
+        value: "1"
+      - key: PUPPETEER_SKIP_DOWNLOAD
+        value: "true"
