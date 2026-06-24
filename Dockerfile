@@ -4,6 +4,7 @@ ENV NODE_ENV=production
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV PUPPETEER_SKIP_DOWNLOAD=true
 ENV CHROME_PATH=/usr/bin/chromium
+ENV DISPLAY=:99
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
@@ -36,4 +37,4 @@ COPY . .
 
 EXPOSE 10000
 
-CMD ["xvfb-run", "-a", "npm", "start"]
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1366x900x24 -ac +extension GLX +render -noreset >/tmp/xvfb.log 2>&1 & node index.js"]
